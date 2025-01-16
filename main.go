@@ -26,7 +26,6 @@ func main() {
 		if err := checkArgs(os.Args); err != nil {
 			fmt.Printf("%v\n", err)
 			fmt.Println(USAGE)
-			os.Exit(1)
 		}
 
 		// 2. Get input string from arguments
@@ -37,7 +36,6 @@ func main() {
 		bannerData, err := readSampleFile(bannerFile)
 		if err != nil {
 			fmt.Printf("Error reading banner file: %v\n", err)
-			os.Exit(1)
 		}
 
 		// 4. Generate ASCII art
@@ -45,7 +43,6 @@ func main() {
 		result, err := generateAsciiArt(asciiArtInput, bannerData)
 		if err != nil {
 			fmt.Printf("Error generating ASCII art: %v\n", err)
-			os.Exit(1)
 		}
 
 		// 5. Print result
@@ -98,19 +95,7 @@ func checkError(err error) {
 }
 
 func generateAsciiArt(asciiArtInput string, bannerData string) (result string, err error) {
-	// 1. Process the input string
-	processedText, err := processText(asciiArtInput)
-	if err != nil {
-		return "", err
-	}
 
-	// 2. Generate ASCII art
-	// TO DO: Implement generateAsciiArt function
-	result, err = generateAsciiArt(processedText, bannerData)
-	if err != nil {
-		return "", err
-	}
 
-	return result, nil
 }
 
