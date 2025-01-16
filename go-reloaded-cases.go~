@@ -1,0 +1,157 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"regexp"
+	"strconv"
+	"strings"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+)
+
+func main() {
+	if len(os.Args) != 3 {
+		fmt.Println("Usage: go run . sample.txt result.txt")
+		os.Exit(1)
+	}
+
+	input := os.Args[1]
+	output := os.Args[2]
+
+	content, err := os.ReadFile(input)
+	if err != nil {
+		fmt.Printf("Error reading file: %v\n", err)
+		os.Exit(1)
+	}
+
+	processedText := processText(string(content))
+
+	err = os.WriteFile(output, []byte(processedText), 0644)
+	if err != nil {
+		fmt.Printf("Error writing file: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func processText(text string) string {
+	text = processHexNumbers(text)
+	text = processBinNumbers(text)
+	text = processTextTransformations(text)
+	text = fixArticles(text)
+	text = fixPunctuation(text)
+	text = fixQuotes(text)
+	return strings.TrimSpace(text)
+}
+
+func processHexNumbers(text string) string {
+	re := regexp.MustCompile(`(\w+)\s*\(hex\)`)
+	return re.ReplaceAllStringFunc(text, func(match string) string {
+		parts := re.FindStringSubmatch(match)
+		hexNum := parts[1]
+		decimal, err := strconv.ParseInt(hexNum, 16, 64)
+		if err != nil {
+			return match
+		}
+		return fmt.Sprintf("%d", decimal)
+	})
+}
+
+func processBinNumbers(text string) string {
+	re := regexp.MustCompile(`(\w+)\s*\(bin\)`)
+	return re.ReplaceAllStringFunc(text, func(match string) string {
+		parts := re.FindStringSubmatch(match)
+		binNum := parts[1]
+		decimal, err := strconv.ParseInt(binNum, 2, 64)
+		if err != nil {
+			return match
+		}
+		return fmt.Sprintf("%d", decimal)
+	})
+}
+
+// Helper function to handle word transformations
+func transformWords(words []string, count int, transform func(string) string) []string {
+	startIdx := len(words) - count
+	if startIdx < 0 {
+		startIdx = 0
+	}
+	result := make([]string, len(words))
+	copy(result, words)
+	for i := startIdx; i < len(words); i++ {
+		result[i] = transform(words[i])
+	}
+	return result
+}
+
+func processTextTransformations(text string) string {
+	caser := cases.Title(language.English)
+
+	// Process (up) transformation
+	upRegex := regexp.MustCompile(`((?:\w+(?:\s+\w+)*?))\s*\(up(?:,\s*(\d+))?\)`)
+	text = upRegex.ReplaceAllStringFunc(text, func(match string) string {
+		parts := upRegex.FindStringSubmatch(match)
+		words := strings.Fields(parts[1])
+		count := 1
+		if len(parts) > 2 && parts[2] != "" {
+			count, _ = strconv.Atoi(parts[2])
+		}
+		words = transformWords(words, count, strings.ToUpper)
+		return strings.Join(words, " ")
+	})
+
+	// Process (low) transformation
+	lowRegex := regexp.MustCompile(`((?:\w+(?:\s+\w+)*?))\s*\(low(?:,\s*(\d+))?\)`)
+	text = lowRegex.ReplaceAllStringFunc(text, func(match string) string {
+		parts := lowRegex.FindStringSubmatch(match)
+		words := strings.Fields(parts[1])
+		count := 1
+		if len(parts) > 2 && parts[2] != "" {
+			count, _ = strconv.Atoi(parts[2])
+		}
+		words = transformWords(words, count, strings.ToLower)
+		return strings.Join(words, " ")
+	})
+
+	// Process (cap) transformation
+	capRegex := regexp.MustCompile(`((?:\w+(?:\s+\w+)*?))\s*\(cap(?:,\s*(\d+))?\)`)
+	text = capRegex.ReplaceAllStringFunc(text, func(match string) string {
+		parts := capRegex.FindStringSubmatch(match)
+		words := strings.Fields(parts[1])
+		count := 1
+		if len(parts) > 2 && parts[2] != "" {
+			count, _ = strconv.Atoi(parts[2])
+		}
+		words = transformWords(words, count, caser.String)
+		return strings.Join(words, " ")
+	})
+
+	return text
+}
+
+func fixArticles(text string) string {
+	re := regexp.MustCompile(`\ba\s+([aeiouAEIOUhH]\w+)`)
+	return re.ReplaceAllString(text, "an $1")
+}
+
+func fixPunctuation(text string) string {
+	// Handle ellipsis properly
+	text = regexp.MustCompile(`\.\.\.`).ReplaceAllString(text, "...")
+	text = regexp.MustCompile(`\s*\.\.\.\s*`).ReplaceAllString(text, "... ")
+	
+	// Handle other special punctuation groups
+	text = regexp.MustCompile(`\s*\!\?\s*`).ReplaceAllString(text, "!? ")
+
+	// Handle single punctuation marks
+	punctuations := []string{",", ".", "!", "?", ":", ";"}
+	for _, p := range punctuations {
+		text = regexp.MustCompile(`\s*`+regexp.QuoteMeta(p)+`\s*`).ReplaceAllString(text, p+" ")
+	}
+
+	return strings.TrimSpace(text)
+}
+
+func fixQuotes(text string) string {
+	re := regexp.MustCompile(`'\s*(.*?)\s*'`)
+	return re.ReplaceAllString(text, "'$1'")
+}

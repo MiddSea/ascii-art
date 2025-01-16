@@ -1,0 +1,19 @@
+func processQuotes(text string) (oText string, err error) {
+	// Handle single quotes
+	quoteWithSpace := regexp.MustCompile(`(\s+')|('+\s+)`)
+	
+	// Replace quotes with spaces with just the quote
+	text = quoteWithSpace.ReplaceAllString(text, "'")
+
+	// Handle quotes at start of string
+	if strings.HasPrefix(text, " '") {
+		text = "'" + strings.TrimPrefix(text, " '")
+	}
+
+	// Handle quotes at end of string
+	if strings.HasSuffix(text, "' ") {
+		text = strings.TrimSuffix(text, "' ") + "'"
+	}
+
+	return text, nil
+}
