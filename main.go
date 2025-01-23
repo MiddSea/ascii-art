@@ -9,10 +9,12 @@ import (
 
 	// "slices"
 	"os"
-	"regexp"
-	"strconv"
+	//"regexp"
+	// "strconv"
 	"strings"
 )
+
+var err error
 
 const (
 	SPACE      = " "
@@ -27,16 +29,18 @@ func main() {
 			fmt.Printf("%v\n", err)
 			fmt.Println(USAGE)
 		}
+		checkError(err)
 
 		// 2. Get input string from arguments
 		asciiArtInput := os.Args[1]
 
 		// 3. Read banner file and parse character templates
-		bannerFile := "standard.txt"  // default banner
-		bannerData, err := readSampleFile(bannerFile)
+		// bannerFile := "standard.txt"  // default banner defined above
+		bannerData, err := readAsciiFormatData(BANNERFILE)
 		if err != nil {
 			fmt.Printf("Error reading banner file: %v\n", err)
 		}
+		checkError(err)
 
 		// 4. Generate ASCII art
 		// TO DO: Implement generateAsciiArt function
@@ -44,6 +48,7 @@ func main() {
 		if err != nil {
 			fmt.Printf("Error generating ASCII art: %v\n", err)
 		}
+		checkError(err)
 
 		// 5. Print result
 		fmt.Print(result)
@@ -77,7 +82,7 @@ func checkArgs(args []string) (err error) {
 	}
 }
 
-func readSampleFile(filename string) (asciiFormatStr string, err error) {
+func readAsciiFormatData(filename string) (asciiFormatStr string, err error) {
 	var asciiFormatData []byte
 	asciiFormatData, err = os.ReadFile(filename)
 	if err != nil {
@@ -94,7 +99,45 @@ func checkError(err error) {
 	}
 }
 
-func generateAsciiArt(asciiArtInput string, bannerData string) (result string, err error) {
+func generateAsciiArt(bannerInput string, asciiFmtData string) (banner string, err error) {
+	// 1. Split input string into bannerInputLines
+	bannerInputLines := strings.Split(bannerInput, "\n")
+	//asciiChars := make([]string, 0)
+	// asciiChars = strings.SplitAfter(asciiArtInput, "\n\n")
+	// asciiFmtChars := strings.Split(bannerData, "\n\n")
+	asciiFmtChars := strings.Split(asciiFmtData, "\n")
+	// map the banner data to the ascii characters in the format [ascii character rune value] = [row 0-] banner character
+	
+
+	// 2. Initialize result
+	banner = ""
+	// 3. Loop through each line
+	for _, bannerInputLine := range bannerInputLines {
+		// 4. Loop through each character in the line
+		for _, r := range bannerInputLine {
+			// 5. Check if character is printable
+			switch  {
+			case r == '\n':
+
+			case r >= 32 && r <= 127:
+			    
+				// 6. Get the index of the character in the banner data
+				index := int(r - 32)
+				// 7. Get the ASCII art for the character
+				charArt := ""
+				for i := 0; i < 8; i++ { 
+					charArt = asciiFmtChars[index+1]
+				}
+				
+				// 8. Append the ASCII art to the result
+				// result = appen	//"regexp"d(result, charArt)
+				banner = banner + charArt
+			}
+		}
+		// 9. Append newline character to the result
+		// result += "\n"
+	}
+	return banner, err
 
 
 }
